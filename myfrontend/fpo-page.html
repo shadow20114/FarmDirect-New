@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FPO Aggregation — FarmDirect</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+<header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-lg">
+<div class="flex items-center gap-3"><span class="text-2xl">🏬</span><h1 class="text-xl font-bold text-emerald-400">FPO Produce Aggregation Hub</h1></div>
+<div class="flex gap-3"><a href="farmer-dashboard.html" class="text-xs text-slate-300 bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-600">Farmer Dashboard</a><a href="index.html" class="text-xs text-slate-400 border border-slate-700 px-3 py-1.5 rounded-lg">← Home</a></div>
+</header>
+<main class="flex-1 max-w-6xl mx-auto w-full p-6 space-y-6">
+<section class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-xl flex flex-col md:flex-row justify-between gap-4">
+<div><h2 class="text-lg font-bold text-slate-100">Sahyadri Farmers Producer Co.</h2><p class="text-xs text-slate-400">Cluster ID: FPO-MH-402 • Bulk Produce Aggregation</p></div>
+<button id="createPoolBtn" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs">+ CREATE NEW BULK POOL</button>
+</section>
+<section id="poolCreator" class="hidden bg-slate-800 rounded-xl border border-emerald-500/30 p-5 shadow-xl">
+<div class="flex justify-between items-center mb-4"><div><h3 class="font-bold text-emerald-400">Create Bulk Pool</h3><p class="text-xs text-slate-400 mt-1">Choose actual published produce and define the bulk order.</p></div><button id="cancelPoolBtn" class="text-xs text-slate-400 border border-slate-700 px-3 py-1.5 rounded-lg">Cancel</button></div>
+<form id="poolForm" class="space-y-5">
+<div><label class="block text-xs font-semibold mb-1">Bulk Pool Name</label><input id="poolName" type="text" placeholder="e.g. Tomato Bulk Pool — Hyderabad Buyers" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs"></div>
+<div><div class="flex justify-between items-center mb-2"><label class="text-xs font-semibold">Select Products</label><span id="selectedCount" class="text-[10px] text-slate-400">0 selected</span></div><div id="poolProducts" class="space-y-2 bg-slate-900 border border-slate-700 rounded-lg p-3 max-h-80 overflow-y-auto"><p class="text-xs text-slate-400 text-center py-5">Loading published products...</p></div></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div><label class="block text-xs font-semibold mb-1">Target Bulk Quantity (Qtl)</label><input id="poolQuantity" type="number" step="0.01" placeholder="500" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs"></div>
+<div><label class="block text-xs font-semibold mb-1">Bulk Pool Amount (₹)</label><input id="poolAmount" type="number" step="0.01" placeholder="1250000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs"></div>
+</div>
+<div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-xs"><p id="poolSummary" class="text-slate-300">Select products and enter the pool quantity and amount.</p></div>
+<p id="poolStatus" class="text-xs text-center"></p>
+<button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 rounded-lg text-xs">CREATE BULK POOL</button>
+</form>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-xl">
+<h3 class="font-bold text-slate-200 text-sm mb-4">🌾 Active Bulk Pools</h3>
+<div id="activePools" class="space-y-4"><p class="text-xs text-slate-400">Loading pools...</p></div>
+</div>
+<div class="bg-slate-800 rounded-xl border border-slate-700 p-5 shadow-xl">
+<h3 class="font-bold text-slate-200 text-sm mb-3">📋 Selected Product Sources</h3>
+<div id="poolSources" class="text-xs text-slate-400">Select products while creating a pool.</div>
+</div>
+</section>
+</main>
+<script src="fpo.js"></script>
+</body>
+</html>
