@@ -11,6 +11,26 @@ const languages={
 "ਪੰਜਾਬੀ (Punjabi)":"pa-IN",
 "తెలుగు (Telugu)":"te-IN"
 };
+const cropAliases={
+tomato:[
+"tomato","tomatoes","टमाटर","टमाटरों","टमाटर की","टोमॅटो","टोमॅटोचा","टोमॅटोचे","ਟਮਾਟਰ","ਟਮਾਟਰਾਂ","ਟਮਾਟਰ ਦਾ","టమాటా","టమాటాలు","టమోటా","టొమాటో","టొమాటాలు","టమోటాలు"
+],
+wheat:[
+"wheat","गेहूं","गेहू","गहू","गव्हाचा","ਗੇਹੂੰ","ਗੇਹੂ","ਗੇਹੂੰ ਦਾ","గోధుమ","గోధుమలు","గోధుమల"
+],
+rice:[
+"rice","चावल","चांवल","तांदूळ","ਭਾਤ","ਚਾਵਲ","ਚੌਲ","బియ్యం","బియ్యము"
+]
+};
+const priceWords=[
+"price","prices","market price","mandi","मंडी","भाव","कीमत","किंमत","मंडी भाव","ਮੰਡੀ","ਮੁੱਲ","ਮੰਡੀ ਭਾਵ","ధర","మార్కెట్","మండి","మార్కెట్ ధర"
+];
+const buyerWords=[
+"show","find","search","view","list","produce","crop",
+"दिखाओ","दिखा","खोजो","देखो","फसल","माल","दाखवा","शोधा",
+"ਦਿਖਾਓ","ਵੇਖੋ","ਖੋਜੋ","ਫਸਲ",
+"వెతుకు","చూపించు","చూపించండి","పంట","చూడండి","వెతకండి"
+];
 if(!voiceButton)return;
 if(!SpeechRecognition){
 if(statusDisplay)statusDisplay.textContent="Voice recognition is not supported. Please use Google Chrome.";
@@ -35,8 +55,19 @@ voiceButton.style.animation="";
 function getLanguage(){
 return languages[languageSelect?.value]||"en-IN";
 }
-function includesWord(text,words){
-return words.some(word=>text.includes(word));
+function normalizeText(text){
+return String(text||"").toLowerCase().trim().replace(/\s+/g," ");
+}
+function includesAny(text,words){
+const value=normalizeText(text);
+return words.some(word=>value.includes(normalizeText(word)));
+}
+function getCrop(text){
+const value=normalizeText(text);
+if(includesAny(value,cropAliases.tomato))return "tomato";
+if(includesAny(value,cropAliases.wheat))return "wheat";
+if(includesAny(value,cropAliases.rice))return "rice";
+return null;
 }
 async function openProduce(crop){
 try{
@@ -44,45 +75,37 @@ setStatus("Searching FarmDirect produce...");
 const response=await fetch("http://127.0.0.1:8000/api/produce/list");
 if(!response.ok)throw new Error("Could not load produce.");
 const items=await response.json();
-const matches=items.filter(item=>(item.crop_name||"").toLowerCase().includes(crop.toLowerCase()));
+const matches=items.filter(item=>normalizeText(item.crop_name).includes(normalizeText(crop)));
 if(matches.length===0){
 setStatus(`No ${crop} produce is currently listed.`);
+localStorage.removeItem("farmDirectVoiceSearch");
 setTimeout(function(){
 window.location.href="buyer-dashboard.html";
 },1200);
 return;
 }
 localStorage.setItem("farmDirectVoiceSearch",crop);
+localStorage.setItem("farmDirectVoiceCommand","true");
 window.location.href="buyer-dashboard.html?search="+encodeURIComponent(crop);
 }catch(error){
 console.error("Produce search error:",error);
 localStorage.setItem("farmDirectVoiceSearch",crop);
+localStorage.setItem("farmDirectVoiceCommand","true");
 window.location.href="buyer-dashboard.html?search="+encodeURIComponent(crop);
 }
 }
 function handleCommand(text){
-const tomatoWords=["tomato","tomatoes","टमाटर","टमाटर की","टोमॅटो","टोमॅटोचा","ਟਮਾਟਰ","ਟਮਾਟਰਾਂ","టమాటా","టమోటా","టొమాటో","టమాటాలు"];
-const wheatWords=["wheat","गेहूं","गहू","ਗੇਹੂੰ","ਗੇਹੂੰ","గోధుమ","గోధుమలు"];
-const riceWords=["rice","चावल","तांदूळ","ਚਾਵਲ","ਚੌਲ","బియ్యం","బియ్యము"];
-const buyerWords=["show","find","search","view","list","produce","crop","दिखाओ","दिखा","खोजो","देखो","फसल","माल","दाखवा","शोधा","ਪੀਖੋ","ਦਿਖਾਓ","వెతుకు","చూపించు","చూపించండి","పంట"];
-const priceWords=["price","prices","market price","mandi","मंडी","भाव","कीमत","किंमत","ਮੰਡੀ","ਮੁੱਲ","ధర","మార్కెట్","మండి"];
-if(includesWord(text,tomatoWords)){
-openProduce("tomato");
+const value=normalizeText(text);
+const crop=getCrop(value);
+if(crop){
+openProduce(crop);
 return;
 }
-if(includesWord(text,wheatWords)){
-openProduce("wheat");
-return;
-}
-if(includesWord(text,riceWords)){
-openProduce("rice");
-return;
-}
-if(includesWord(text,priceWords)){
+if(includesAny(value,priceWords)){
 window.location.href="ai-page.html";
 return;
 }
-if(includesWord(text,buyerWords)){
+if(includesAny(value,buyerWords)){
 window.location.href="buyer-dashboard.html";
 return;
 }
@@ -93,7 +116,7 @@ const r=new SpeechRecognition();
 r.lang=getLanguage();
 r.continuous=false;
 r.interimResults=false;
-r.maxAlternatives=3;
+r.maxAlternatives=5;
 r.onstart=function(){
 listening=true;
 setButton(true);
@@ -103,11 +126,14 @@ r.onspeechstart=function(){
 setStatus("Speech detected. Processing...");
 };
 r.onresult=function(event){
-let text="";
+let transcripts=[];
 for(let i=0;i<event.results.length;i++){
-text+=event.results[i][0].transcript+" ";
+for(let j=0;j<event.results[i].length;j++){
+const transcript=event.results[i][j].transcript;
+if(transcript)transcripts.push(transcript);
 }
-text=text.trim();
+}
+const text=transcripts.join(" ").trim();
 console.log("Recognized speech:",text);
 if(speechDisplay)speechDisplay.textContent='"'+text+'"';
 if(!text){
@@ -115,7 +141,7 @@ setStatus("Could not recognize speech. Please try again.");
 return;
 }
 setStatus("Command recognized.");
-handleCommand(text.toLowerCase());
+handleCommand(text);
 };
 r.onerror=function(event){
 console.error("Voice error:",event.error);
@@ -161,5 +187,5 @@ setStatus("Language changed. Press the microphone and speak.");
 });
 }
 setButton(false);
-setStatus("Click and speak. Example: \"show tomatoes\"");
+setStatus('Click and speak. Example: "show tomatoes"');
 });
